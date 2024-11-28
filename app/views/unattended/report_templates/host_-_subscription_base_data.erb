@@ -1,0 +1,40 @@
+<%#
+name: Host - Subscription Base Data
+snippet: false
+template_inputs:
+- name: Hosts filter
+  required: false
+  input_type: user
+  description: Limit the report only on hosts found by this search query. Keep empty
+    for report on all available hosts.
+  advanced: false
+  value_type: search
+  resource_type: Host
+model: ReportTemplate
+require:
+- plugin: katello
+  version: 3.9.0
+-%>
+<%- report_headers 'Host Name', 'IP Address', 'Organization', 'Lifecycle Environment', 'Content View', 'Virtual', 'Guest of Host', 'OS', 'Arch', 'Sockets', 'Cores', 'Role', 'Usage', 'SLA', 'Release Version', 'Is Hypervisor', 'Products' -%>
+<%- load_hosts(search: input('Hosts filter'), includes: [:content_view_environments, :host_collections, :operatingsystem, :architecture, :organization, :reported_data, :interfaces]).each_record do |host| -%>
+<%-   report_row(
+          'Host Name': host.name,
+          'IP Address': host.ip,
+          'Organization': host.organization,
+          'Lifecycle Environment': host.single_lifecycle_environment ? host.single_lifecycle_environment.name : nil,
+          'Content View': host.single_content_view ? host.single_content_view.name : nil,
+          'Virtual': host.virtual,
+          'Guest of Host': host.hypervisor_host,
+          'OS': host.operatingsystem,
+          'Arch': host.architecture,
+          'Sockets': host.sockets,
+          'Cores': host.cores,
+          'Role': host_purpose_role(host),
+          'Usage': host_purpose_usage(host),
+          'SLA': host_sla(host),
+          'Release Version': host_purpose_release_version(host),
+          'Is Hypervisor': host_is_hypervisor(host),
+          'Products': host_products_names(host)
+      ) -%>
+<%- end -%>
+<%= report_render -%>
